@@ -1,6 +1,6 @@
 using Backend.Data;
 using Backend.Repositories;
-
+using Backend.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +16,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddHttpClient<NasaApiService>();
 
 var app = builder.Build();
 

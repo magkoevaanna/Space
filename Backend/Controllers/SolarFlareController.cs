@@ -1,18 +1,22 @@
 using Backend.Data.Entities;
 using Backend.Repositories;
+using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;
 
 [ApiController]
-[Route("api/[controller]")] 
+[Route("api/[controller]")]
 public class SolarFlareController : ControllerBase
 {
     private readonly ISolarFlareRepository _repository;
+    private readonly NasaApiService _nasaApiService;
 
-    public SolarFlareController(ISolarFlareRepository repository)
+    // Внедряем и репозиторий, и сервис NASA через конструктор
+    public SolarFlareController(ISolarFlareRepository repository, NasaApiService nasaApiService)
     {
         _repository = repository;
+        _nasaApiService = nasaApiService;
     }
 
     [HttpGet]
@@ -33,17 +37,19 @@ public class SolarFlareController : ControllerBase
         return Ok(flare);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<SolarFlare>> CreateFlare([FromBody] SolarFlare flare)
+    // НОВЫЙ МЕТОД: POST /api/solarflare/fetch-nasa
+    [HttpPost("fetch-nasa")]
+    public async Task<IActionResult> FetchNasaData([FromQuery] string startDate = "2023-01-01", [FromQuery] string endDate = "2023-01-10")
     {
-        if (flare == null)
+        try
         {
-            return BadRequest(new { message = "Некорректные данные вспышки." });
+            int addedFlares = await _nasaApiService.FetchAndSaveSolarFlaresAsync(startDate, endDate);
+            return Ok(new { message = "Синхронизация с NASA завершена успешно!", recordsAdded = addedFlares });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = $"Ошибка при синхронизации: {ex.Message}" });
         }
 
-        await _repository.AddAsync(flare);
-        await _repository.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetFlareById), new { id = flare.FlrID }, flare);
     }
 }
