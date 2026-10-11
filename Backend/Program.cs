@@ -19,16 +19,11 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient<NasaApiService>();
 
-var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 app.UseHttpsRedirection();
 
 app.MapControllers();
-
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5055";
+app.Urls.Add($"http://*:{port}");
 app.Run();
