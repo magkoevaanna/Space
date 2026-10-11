@@ -1,13 +1,18 @@
 using Backend.Data;
-using Microsoft.EntityFrameworkCore;
+using Backend.Repositories;
 
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+builder.Services.AddScoped<ISolarFlareRepository, SolarFlareRepository>();
+
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -22,21 +27,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/test-db", async (AppDbContext db) =>
-{
-    try
-    {
-        var canConnect = await db.Database.CanConnectAsync();
-        if (canConnect)
-        {
-            return Results.Ok(new { message = "Успешное подключение к Clever Cloud MySQL!" });
-        }
-        return Results.BadRequest(new { message = "Не удалось подключиться к базе." });
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"Ошибка подключения: {ex.Message}");
-    }
-});
+app.MapControllers();
 
 app.Run();
